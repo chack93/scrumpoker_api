@@ -44,7 +44,7 @@ clean:
 
 .PHONY: build
 build: docs
-	go build -o bin/${APP_NAME} cmd/api/main.go
+	CGO_ENABLED=0 go build -o bin/${APP_NAME} cmd/api/main.go
 
 .PHONY: test
 test: build

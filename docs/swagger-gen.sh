@@ -30,5 +30,7 @@ ${GOPATH}/bin/yq merge ${SWAGGER_FILES} > ../internal/service/server/swagger/swa
 
 # overwrite placeholder
 echo "overwrite placeholder in swagger_gen.yaml"
-sed -i '' -e "s/__VERSION__/${VERSION}/" -e "s/__APP_NAME__/${APP_NAME}/" ../internal/service/server/swagger/swagger_gen.yaml
-
+cat ../internal/service/server/swagger/swagger_gen.yaml \
+	| sed -e "s/__VERSION__/${VERSION}/" -e "s/__APP_NAME__/${APP_NAME}/" \
+	> out.yaml
+mv out.yaml	../internal/service/server/swagger/swagger_gen.yaml
