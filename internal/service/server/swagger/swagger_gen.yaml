@@ -1,0 +1,200 @@
+components:
+  schemas:
+    BaseModel:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        deletedAt:
+          format: date-time
+          type: string
+        id:
+          format: uuid
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
+    Error:
+      properties:
+        message:
+          type: string
+      required:
+      - message
+      type: object
+    NewSession:
+      allOf:
+      - properties:
+          description:
+            type: string
+        type: object
+    Session:
+      allOf:
+      - $ref: ../common/common.yaml#/components/schemas/BaseModel
+      - $ref: '#/components/schemas/NewSession'
+      - properties:
+          joinCode:
+            type: string
+        required:
+        - id
+        type: object
+info:
+  description: go_base REST api
+  title: go_base REST api
+  version: 1.0.0
+openapi: 3.0.0
+paths:
+  /session:
+    get:
+      description: List all sessions
+      operationId: listSession
+      parameters:
+      - description: maximum number of results to return
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int32
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Session'
+                type: array
+          description: session response
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: ../common/common.yaml#/components/schemas/Error
+          description: unexpected error
+    post:
+      description: Creates a new session with random joinCode
+      operationId: createSession
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewSession'
+        description: Details about new session to create
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+          description: session response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: ../common/common.yaml#/components/schemas/Error
+          description: invalid request body
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: ../common/common.yaml#/components/schemas/Error
+          description: unexpected error
+  /session/{id}:
+    delete:
+      description: deletes session of id
+      operationId: deleteSession
+      parameters:
+      - description: id of session
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        "204":
+          description: session deleted
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: ../common/common.yaml#/components/schemas/Error
+          description: not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: ../common/common.yaml#/components/schemas/Error
+          description: unexpected error
+    get:
+      description: Read session of id
+      operationId: readSession
+      parameters:
+      - description: id of session
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+          description: session response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: ../common/common.yaml#/components/schemas/Error
+          description: not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: ../common/common.yaml#/components/schemas/Error
+          description: unexpected error
+    put:
+      description: update session of id
+      operationId: updateSession
+      parameters:
+      - description: id of session
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewSession'
+        description: Session to update
+        required: true
+      responses:
+        "204":
+          description: session updated
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: ../common/common.yaml#/components/schemas/Error
+          description: invalid request body
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: ../common/common.yaml#/components/schemas/Error
+          description: not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: ../common/common.yaml#/components/schemas/Error
+          description: unexpected error

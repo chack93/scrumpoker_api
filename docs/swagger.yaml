@@ -1,0 +1,5 @@
+openapi: "3.0.0"
+info:
+  version: __VERSION__
+  title: __APP_NAME__ REST api 
+  description: __APP_NAME__ REST api

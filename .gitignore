@@ -1,0 +1,4 @@
+.DS_Store
+.env
+bin/
+docs/swagger-ui-4.5.0
