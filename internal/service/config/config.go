@@ -16,7 +16,7 @@ func Init() error {
 	viper.SetDefault("port", "8080")
 	viper.SetDefault("server.host", viper.GetString("host"))
 	viper.SetDefault("server.port", viper.GetString("port"))
-	viper.SetDefault("database.url", "postgresql://postgres:postgres@localhost/go_base")
+	viper.SetDefault("database.url", "postgresql://postgres:postgres@localhost/scrumpoker_api")
 
 	return nil
 }

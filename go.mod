@@ -1,4 +1,4 @@
-module github.com/chack93/go_base
+module github.com/chack93/scrumpoker_api
 
 go 1.17
 

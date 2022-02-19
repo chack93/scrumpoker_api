@@ -41,8 +41,8 @@ components:
         - id
         type: object
 info:
-  description: go_base REST api
-  title: go_base REST api
+  description: scrumpoker_api REST api
+  title: scrumpoker_api REST api
   version: 1.0.0
 openapi: 3.0.0
 paths:

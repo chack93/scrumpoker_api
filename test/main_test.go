@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chack93/go_base/internal/domain"
-	"github.com/chack93/go_base/internal/domain/common"
-	"github.com/chack93/go_base/internal/service/config"
-	"github.com/chack93/go_base/internal/service/database"
-	"github.com/chack93/go_base/internal/service/logger"
+	"github.com/chack93/scrumpoker_api/internal/domain"
+	"github.com/chack93/scrumpoker_api/internal/domain/common"
+	"github.com/chack93/scrumpoker_api/internal/service/config"
+	"github.com/chack93/scrumpoker_api/internal/service/database"
+	"github.com/chack93/scrumpoker_api/internal/service/logger"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )

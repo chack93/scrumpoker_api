@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/chack93/go_base/internal/domain/session"
+	"github.com/chack93/scrumpoker_api/internal/domain/session"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,7 +14,7 @@ import (
 func TestSessionCLRUD(t *testing.T) {
 	var ctx echo.Context
 	var rec *httptest.ResponseRecorder
-	var baseURL = "/api/go_base/session/"
+	var baseURL = "/api/scrumpoker_api/session/"
 	var impl = session.ServerInterfaceImpl{}
 
 	// CREATE

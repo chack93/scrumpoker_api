@@ -1,4 +1,4 @@
-APP_NAME = go_base
+APP_NAME = scrumpoker_api
 VERSION = 1.0.0
 HOST ?= 127.0.0.1
 PORT ?= 8080

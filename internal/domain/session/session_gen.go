@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	externalRef0 "github.com/chack93/go_base/internal/domain/common"
+	externalRef0 "github.com/chack93/scrumpoker_api/internal/domain/common"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/labstack/echo/v4"
 )

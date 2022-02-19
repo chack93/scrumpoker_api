@@ -1,7 +1,7 @@
 package session
 
 import (
-	"github.com/chack93/go_base/internal/service/database"
+	"github.com/chack93/scrumpoker_api/internal/service/database"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )

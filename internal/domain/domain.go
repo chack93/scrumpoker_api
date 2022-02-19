@@ -1,8 +1,8 @@
 package domain
 
 import (
-	"github.com/chack93/go_base/internal/domain/session"
-	"github.com/chack93/go_base/internal/service/database"
+	"github.com/chack93/scrumpoker_api/internal/domain/session"
+	"github.com/chack93/scrumpoker_api/internal/service/database"
 	"github.com/labstack/echo/v4"
 )
 

@@ -1,4 +1,4 @@
-# go_base
+# scrumpoker_api
 
 Add your app description
 
@@ -98,7 +98,7 @@ Add all the document describing your app in this directory.
 
 **docs/swagger-gen.sh** will be called by make docs. Generates handler & models for your domains based on the domains swagger .yaml definition.  
 All swagger .yaml files will be assembled into one, internal/service/server/swagger/swagger_gen.yaml  
-By default the swagger-ui will be served on /api/go_base/doc
+By default the swagger-ui will be served on /api/scrumpoker_api/doc
 
 ### internal/service
 
@@ -106,7 +106,7 @@ Add services that will be used across the codebase.
 
 ### internal/domain
 
-Contains different logical domains of your app. The domain will then be served on the subroute named after the domain. Example /api/go_base/session
+Contains different logical domains of your app. The domain will then be served on the subroute named after the domain. Example /api/scrumpoker_api/session
 
 To create a new **DOMAIN** follow these steps:
 1. Add directory/package and the domains swagger specification whithin. The **DOMAIN**.yaml file defines the http endpoints and models.

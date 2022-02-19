@@ -3,11 +3,11 @@ package main
 import (
 	"sync"
 
-	"github.com/chack93/go_base/internal/domain"
-	"github.com/chack93/go_base/internal/service/config"
-	"github.com/chack93/go_base/internal/service/database"
-	"github.com/chack93/go_base/internal/service/logger"
-	"github.com/chack93/go_base/internal/service/server"
+	"github.com/chack93/scrumpoker_api/internal/domain"
+	"github.com/chack93/scrumpoker_api/internal/service/config"
+	"github.com/chack93/scrumpoker_api/internal/service/database"
+	"github.com/chack93/scrumpoker_api/internal/service/logger"
+	"github.com/chack93/scrumpoker_api/internal/service/server"
 	"github.com/sirupsen/logrus"
 )
 

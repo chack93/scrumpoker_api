@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chack93/go_base/internal/domain"
+	"github.com/chack93/scrumpoker_api/internal/domain"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
@@ -46,7 +46,7 @@ func (srv *Server) Init(wg *sync.WaitGroup) error {
 	srv.echo.Use(middleware.Logger())
 	srv.echo.Use(middleware.Recover())
 
-	baseURL := "/api/go_base"
+	baseURL := "/api/scrumpoker"
 	apiGroup := srv.echo.Group(baseURL)
 	apiGroup.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
@@ -54,6 +54,9 @@ func (srv *Server) Init(wg *sync.WaitGroup) error {
 		}{"ok"})
 	})
 	apiGroup.GET("/doc", func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "doc/")
+	})
+	apiGroup.GET("/doc/", func(c echo.Context) error {
 		return c.HTMLBlob(http.StatusOK, swaggerHtml)
 	})
 	apiGroup.GET("/doc/swagger.yaml", func(c echo.Context) error {
