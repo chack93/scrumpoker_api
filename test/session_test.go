@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSessionCLRUD(t *testing.T) {
+func TestSessionCRUD(t *testing.T) {
 	var ctx echo.Context
 	var rec *httptest.ResponseRecorder
 	var baseURL = "/api/scrumpoker_api/session/"
@@ -19,9 +19,13 @@ func TestSessionCLRUD(t *testing.T) {
 
 	// CREATE
 	var respCreate session.Session
-	descCreate := "new session"
+	var descCreate = "new session"
+	var cardSelectionListCreate = "1,2,3"
+	var ownerClientIdCreate = "1234"
 	ctx, rec = Request("POST", baseURL, session.CreateSessionJSONRequestBody{
-		Description: &descCreate,
+		Description:       &descCreate,
+		CardSelectionList: &cardSelectionListCreate,
+		OwnerClientId:     &ownerClientIdCreate,
 	})
 	assert.NoError(t, impl.CreateSession(ctx))
 	assert.Equal(t, http.StatusOK, rec.Code)
@@ -29,16 +33,8 @@ func TestSessionCLRUD(t *testing.T) {
 	assert.True(t, respCreate.JoinCode != nil)
 	assert.Equal(t, 8, len(*respCreate.JoinCode))
 	assert.Equal(t, descCreate, *respCreate.Description)
-
-	// LIST
-	ctx, rec = Request("GET", baseURL, nil)
-	assert.NoError(t, impl.ListSession(ctx, session.ListSessionParams{}))
-	var respList []session.Session
-	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &respList))
-	assert.Equal(t, 1, len(respList))
-	assert.Equal(t, *respCreate.JoinCode, *respList[0].JoinCode)
-	assert.Equal(t, *respCreate.Description, *respList[0].Description)
+	assert.Equal(t, cardSelectionListCreate, *respCreate.CardSelectionList)
+	assert.Equal(t, ownerClientIdCreate, *respCreate.OwnerClientId)
 
 	// READ
 	ctx, rec = Request("GET", baseURL+":id", nil)
@@ -48,13 +44,37 @@ func TestSessionCLRUD(t *testing.T) {
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &respRead))
 	assert.Equal(t, *respCreate.JoinCode, *respRead.JoinCode)
 	assert.Equal(t, *respCreate.Description, *respRead.Description)
+	assert.Equal(t, *respCreate.CardSelectionList, *respRead.CardSelectionList)
+	assert.Equal(t, *respCreate.OwnerClientId, *respRead.OwnerClientId)
+
+	// READ JOINCODE
+	ctx, rec = Request("GET", baseURL+"/join/:joinCode", nil)
+	assert.NoError(t, impl.ReadSessionJoinCode(ctx, *respCreate.JoinCode))
+	assert.Equal(t, http.StatusOK, rec.Code)
+	var respReadJoinCode session.Session
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &respReadJoinCode))
+	assert.Equal(t, respCreate.ID.String(), respReadJoinCode.ID.String())
+	assert.Equal(t, *respCreate.JoinCode, *respReadJoinCode.JoinCode)
+	assert.Equal(t, *respCreate.Description, *respReadJoinCode.Description)
+	assert.Equal(t, *respCreate.CardSelectionList, *respReadJoinCode.CardSelectionList)
+	assert.Equal(t, *respCreate.OwnerClientId, *respReadJoinCode.OwnerClientId)
 
 	// UPDATE
 	var descUpdate = "updated description"
+	var cardSelectionListUpdate = "1,2,3,5,6"
+	var ownerClientIdUpdate = "4321"
 	ctx, rec = Request("PUT", baseURL+":id", session.UpdateSessionJSONRequestBody{
-		Description: &descUpdate,
+		Description:       &descUpdate,
+		CardSelectionList: &cardSelectionListUpdate,
+		OwnerClientId:     &ownerClientIdUpdate,
 	})
-	assert.NoError(t, impl.UpdateSession(ctx, respCreate.ID.String()))
+	assert.NoError(t, impl.UpdateSession(
+		ctx,
+		respCreate.ID.String(),
+		session.UpdateSessionParams{
+			ClientId: ownerClientIdCreate,
+		},
+	))
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 	// UPDATE-READ
 	ctx, rec = Request("GET", baseURL+":id", nil)
@@ -64,15 +84,21 @@ func TestSessionCLRUD(t *testing.T) {
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &respUpdate))
 	assert.Equal(t, *respCreate.JoinCode, *respUpdate.JoinCode)
 	assert.Equal(t, descUpdate, *respUpdate.Description)
+	assert.Equal(t, cardSelectionListUpdate, *respUpdate.CardSelectionList)
+	assert.Equal(t, ownerClientIdUpdate, *respUpdate.OwnerClientId)
 
-	// DELETE
-	ctx, rec = Request("DELETE", baseURL+":id", nil)
-	assert.NoError(t, impl.DeleteSession(ctx, respCreate.ID.String()))
-	assert.Equal(t, http.StatusNoContent, rec.Code)
-	// DELETE-READ
-	ctx, rec = Request("GET", baseURL+":id", nil)
-	errRead := impl.ReadSession(ctx, respCreate.ID.String())
+	// UPDATE BAD CLIENT
+	ctx, rec = Request("PUT", baseURL+":id", session.UpdateSessionJSONRequestBody{
+		Description: &descUpdate,
+	})
+	errRead := impl.UpdateSession(
+		ctx,
+		respCreate.ID.String(),
+		session.UpdateSessionParams{
+			ClientId: "bad",
+		},
+	)
 	assert.Error(t, errRead)
 	respError := errRead.(*echo.HTTPError)
-	assert.Equal(t, http.StatusNotFound, respError.Code)
+	assert.Equal(t, http.StatusUnauthorized, respError.Code)
 }

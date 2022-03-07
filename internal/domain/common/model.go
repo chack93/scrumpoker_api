@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,4 +26,14 @@ func (m *BaseModel) SetUpdate() {
 type Error struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
+}
+
+type SocketMsgHead struct {
+	Action   string `json:"action"`
+	ClientID string `json:"clientId"`
+	GroupID  string `json:"groupId"`
+}
+type SocketMsg struct {
+	Head SocketMsgHead   `json:"head"`
+	Body json.RawMessage `json:"body"`
 }

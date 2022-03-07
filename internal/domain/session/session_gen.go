@@ -12,33 +12,35 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// NewSession defines model for NewSession.
-type NewSession struct {
-	// Embedded fields due to inline allOf schema
-	Description *string `json:"description,omitempty"`
-}
-
 // Session defines model for Session.
 type Session struct {
 	// Embedded struct due to allOf(../common/common.yaml#/components/schemas/BaseModel)
 	externalRef0.BaseModel `yaml:",inline"`
-	// Embedded struct due to allOf(#/components/schemas/NewSession)
-	NewSession `yaml:",inline"`
+	// Embedded struct due to allOf(#/components/schemas/SessionNew)
+	SessionNew `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
 	JoinCode *string `json:"joinCode,omitempty"`
 }
 
-// ListSessionParams defines parameters for ListSession.
-type ListSessionParams struct {
-	// maximum number of results to return
-	Limit *int32 `json:"limit,omitempty"`
+// SessionNew defines model for SessionNew.
+type SessionNew struct {
+	// Embedded fields due to inline allOf schema
+	CardSelectionList *string `json:"cardSelectionList,omitempty"`
+	Description       *string `json:"description,omitempty"`
+	OwnerClientId     *string `json:"ownerClientId,omitempty"`
 }
 
 // CreateSessionJSONBody defines parameters for CreateSession.
-type CreateSessionJSONBody NewSession
+type CreateSessionJSONBody SessionNew
 
 // UpdateSessionJSONBody defines parameters for UpdateSession.
-type UpdateSessionJSONBody NewSession
+type UpdateSessionJSONBody SessionNew
+
+// UpdateSessionParams defines parameters for UpdateSession.
+type UpdateSessionParams struct {
+	// owner client id
+	ClientId string `json:"clientId"`
+}
 
 // CreateSessionJSONRequestBody defines body for CreateSession for application/json ContentType.
 type CreateSessionJSONRequestBody CreateSessionJSONBody
@@ -49,43 +51,22 @@ type UpdateSessionJSONRequestBody UpdateSessionJSONBody
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /session)
-	ListSession(ctx echo.Context, params ListSessionParams) error
-
 	// (POST /session)
 	CreateSession(ctx echo.Context) error
 
-	// (DELETE /session/{id})
-	DeleteSession(ctx echo.Context, id string) error
+	// (GET /session/join/{joinCode})
+	ReadSessionJoinCode(ctx echo.Context, joinCode string) error
 
 	// (GET /session/{id})
 	ReadSession(ctx echo.Context, id string) error
 
 	// (PUT /session/{id})
-	UpdateSession(ctx echo.Context, id string) error
+	UpdateSession(ctx echo.Context, id string, params UpdateSessionParams) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
-}
-
-// ListSession converts echo context to params.
-func (w *ServerInterfaceWrapper) ListSession(ctx echo.Context) error {
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListSessionParams
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.ListSession(ctx, params)
-	return err
 }
 
 // CreateSession converts echo context to params.
@@ -97,19 +78,19 @@ func (w *ServerInterfaceWrapper) CreateSession(ctx echo.Context) error {
 	return err
 }
 
-// DeleteSession converts echo context to params.
-func (w *ServerInterfaceWrapper) DeleteSession(ctx echo.Context) error {
+// ReadSessionJoinCode converts echo context to params.
+func (w *ServerInterfaceWrapper) ReadSessionJoinCode(ctx echo.Context) error {
 	var err error
-	// ------------- Path parameter "id" -------------
-	var id string
+	// ------------- Path parameter "joinCode" -------------
+	var joinCode string
 
-	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "joinCode", runtime.ParamLocationPath, ctx.Param("joinCode"), &joinCode)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter joinCode: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.DeleteSession(ctx, id)
+	err = w.Handler.ReadSessionJoinCode(ctx, joinCode)
 	return err
 }
 
@@ -140,8 +121,17 @@ func (w *ServerInterfaceWrapper) UpdateSession(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateSessionParams
+	// ------------- Required query parameter "clientId" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "clientId", ctx.QueryParams(), &params.ClientId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter clientId: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.UpdateSession(ctx, id)
+	err = w.Handler.UpdateSession(ctx, id, params)
 	return err
 }
 
@@ -173,9 +163,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/session", wrapper.ListSession)
 	router.POST(baseURL+"/session", wrapper.CreateSession)
-	router.DELETE(baseURL+"/session/:id", wrapper.DeleteSession)
+	router.GET(baseURL+"/session/join/:joinCode", wrapper.ReadSessionJoinCode)
 	router.GET(baseURL+"/session/:id", wrapper.ReadSession)
 	router.PUT(baseURL+"/session/:id", wrapper.UpdateSession)
 

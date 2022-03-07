@@ -17,6 +17,25 @@ components:
       required:
       - id
       type: object
+    Client:
+      allOf:
+      - $ref: '#/components/schemas/BaseModel'
+      - $ref: '#/components/schemas/ClientNew'
+    ClientNew:
+      allOf:
+      - properties:
+          connected:
+            type: boolean
+          estimation:
+            type: string
+          name:
+            type: string
+          sessionId:
+            format: uuid
+            type: string
+          viewer:
+            type: boolean
+        type: object
     Error:
       properties:
         message:
@@ -24,63 +43,220 @@ components:
       required:
       - message
       type: object
-    NewSession:
+    History:
+      allOf:
+      - $ref: '#/components/schemas/BaseModel'
+      - $ref: '#/components/schemas/HistoryNew'
+    HistoryList:
+      items:
+        $ref: '#/components/schemas/History'
+      type: array
+    HistoryNew:
       allOf:
       - properties:
-          description:
+          clientId:
+            format: uuid
+            type: string
+          clientName:
+            type: string
+          estimation:
+            type: string
+          sessionId:
+            format: uuid
             type: string
         type: object
     Session:
       allOf:
-      - $ref: ../common/common.yaml#/components/schemas/BaseModel
-      - $ref: '#/components/schemas/NewSession'
+      - $ref: '#/components/schemas/BaseModel'
+      - $ref: '#/components/schemas/SessionNew'
       - properties:
           joinCode:
             type: string
         required:
         - id
         type: object
+    SessionNew:
+      allOf:
+      - properties:
+          cardSelectionList:
+            type: string
+          description:
+            type: string
+          ownerClientId:
+            format: uuid
+            type: string
+        type: object
+    SocketMsg:
+      properties:
+        body:
+          type: object
+        head:
+          properties:
+            action:
+              description: action to perform
+              type: string
+            clientId:
+              description: client this message originated from or shall be sent to
+              format: uuid
+              type: string
+            groupId:
+              description: group this message is intended for
+              format: uuid
+              type: string
+          required:
+          - action
+          - clientId
+          type: object
+      type: object
 info:
   description: scrumpoker_api REST api
   title: scrumpoker_api REST api
   version: 1.0.0
 openapi: 3.0.0
 paths:
-  /session:
-    get:
-      description: List all sessions
-      operationId: listSession
-      parameters:
-      - description: maximum number of results to return
-        in: query
-        name: limit
-        required: false
-        schema:
-          format: int32
-          type: integer
+  /client:
+    post:
+      description: Creates a new client, client will be destroyed after 48h of inactivity.
+        (no estimation or update to the client settings)
+      operationId: createClient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientNew'
+        description: Details about new client to create
+        required: true
       responses:
         "200":
           content:
             application/json:
               schema:
-                items:
-                  $ref: '#/components/schemas/Session'
-                type: array
-          description: session response
+                $ref: '#/components/schemas/Client'
+          description: client response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: invalid request body
         default:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: unexpected error
+  /client/{id}:
+    get:
+      description: Read client of id. Use this to check if client is still active
+        or a new one must be created.
+      operationId: readClient
+      parameters:
+      - description: id of client
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          description: client response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+    put:
+      description: update client of id
+      operationId: updateClient
+      parameters:
+      - description: id of client
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientNew'
+        description: Client to update
+        required: true
+      responses:
+        "204":
+          description: client updated
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: invalid request body
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+  /history/{sessionId}:
+    get:
+      description: Read history of sessionId.
+      operationId: listHistory
+      parameters:
+      - description: id of session
+        in: path
+        name: sessionId
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryList'
+          description: history response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+  /session:
     post:
-      description: Creates a new session with random joinCode
+      description: Creates a new session with random joinCode, session will be destroyed
+        after 48h of inactivity. (no estimation or update to the session settings)
       operationId: createSession
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewSession'
+              $ref: '#/components/schemas/SessionNew'
         description: Details about new session to create
         required: true
       responses:
@@ -94,41 +270,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: invalid request body
         default:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: unexpected error
   /session/{id}:
-    delete:
-      description: deletes session of id
-      operationId: deleteSession
-      parameters:
-      - description: id of session
-        in: path
-        name: id
-        required: true
-        schema:
-          format: uuid
-          type: string
-      responses:
-        "204":
-          description: session deleted
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
-          description: not found
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
-          description: unexpected error
     get:
       description: Read session of id
       operationId: readSession
@@ -151,16 +301,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: not found
         default:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: unexpected error
     put:
-      description: update session of id
+      description: update session of id, can only be done by the session owner
       operationId: updateSession
       parameters:
       - description: id of session
@@ -170,11 +320,18 @@ paths:
         schema:
           format: uuid
           type: string
+      - description: owner client id
+        in: query
+        name: clientId
+        required: true
+        schema:
+          format: uuid
+          type: string
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewSession'
+              $ref: '#/components/schemas/SessionNew'
         description: Session to update
         required: true
       responses:
@@ -184,17 +341,83 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: invalid request body
         "404":
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: not found
         default:
           content:
             application/json:
               schema:
-                $ref: ../common/common.yaml#/components/schemas/Error
+                $ref: '#/components/schemas/Error'
           description: unexpected error
+  /session/join/{joinCode}:
+    get:
+      description: Read session identified by joinCode
+      operationId: readSessionJoinCode
+      parameters:
+      - description: joinCode of session
+        in: path
+        name: joinCode
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+          description: session response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+  /ws/{clientId}:
+    get:
+      description: |
+        websocket endpoint. \
+        The socket-messages head describes \
+        * what action shall be performed (action) \
+        * the origin/destination of the message (clientId) \
+        * the group this message is intended for (groupId) \
+        actions \
+        * update
+      operationId: sessionWebsocket
+      parameters:
+      - description: client id
+        in: path
+        name: clientId
+        required: true
+        schema:
+          format: uuid
+          type: string
+      responses:
+        "101":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocketMsg'
+          description: successfully upgraded to websocket connection
+        "404":
+          description: session of id not found
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+servers:
+- url: /api/scrumpoker

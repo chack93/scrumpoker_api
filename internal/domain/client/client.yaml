@@ -1,22 +1,22 @@
 paths:
-  /session:
+  /client:
     post:
-      description: Creates a new session with random joinCode, session will be destroyed after 48h of inactivity. (no estimation or update to the session settings)
-      operationId: createSession
+      description: Creates a new client, client will be destroyed after 48h of inactivity. (no estimation or update to the client settings)
+      operationId: createClient
       requestBody:
-        description: Details about new session to create
+        description: Details about new client to create
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SessionNew'
+              $ref: '#/components/schemas/ClientNew'
       responses:
         '200':
-          description: session response
+          description: client response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
+                $ref: '#/components/schemas/Client'
         '400':
           description: invalid request body
           content:
@@ -29,25 +29,25 @@ paths:
             application/json:
               schema:
                 $ref: '../common/common.yaml#/components/schemas/Error'
-  /session/{id}:
+  /client/{id}:
     get:
-      description: Read session of id
-      operationId: readSession
+      description: Read client of id. Use this to check if client is still active or a new one must be created.
+      operationId: readClient
       parameters:
         - name: id
           in: path
-          description: id of session
+          description: id of client
           required: true
           schema:
             type: string
             format: uuid
       responses:
         '200':
-          description: session response
+          description: client response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
+                $ref: '#/components/schemas/Client'
         '404':
           description: not found 
           content:
@@ -61,69 +61,32 @@ paths:
               schema:
                 $ref: '../common/common.yaml#/components/schemas/Error'
     put:
-      description: update session of id, can only be done by the session owner
-      operationId: updateSession
+      description: update client of id
+      operationId: updateClient
       parameters:
         - name: id
           in: path
-          description: id of session
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: clientId
-          in: query
-          description: owner client id 
+          description: id of client
           required: true
           schema:
             type: string
             format: uuid
       requestBody:
-        description: Session to update
+        description: Client to update
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SessionNew'
+              $ref: '#/components/schemas/ClientNew'
       responses:
         '204':
-          description: session updated
+          description: client updated
         '400':
           description: invalid request body
           content:
             application/json:
               schema:
                 $ref: '../common/common.yaml#/components/schemas/Error'
-        '404':
-          description: not found 
-          content:
-            application/json:
-              schema:
-                $ref: '../common/common.yaml#/components/schemas/Error'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '../common/common.yaml#/components/schemas/Error'
-  /session/join/{joinCode}:
-    get:
-      description: Read session identified by joinCode
-      operationId: readSessionJoinCode
-      parameters:
-        - name: joinCode
-          in: path
-          description: joinCode of session
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: session response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Session'
         '404':
           description: not found 
           content:
@@ -138,24 +101,22 @@ paths:
                 $ref: '../common/common.yaml#/components/schemas/Error'
 components:
   schemas:
-    Session:
+    Client:
       allOf:
         - $ref: '../common/common.yaml#/components/schemas/BaseModel'
-        - $ref: '#/components/schemas/SessionNew'
-        - type: object
-          required:
-          - id
-          properties:
-            joinCode:
-              type: string
-    SessionNew:
+        - $ref: '#/components/schemas/ClientNew'
+    ClientNew:
       allOf:
         - type: object
           properties:
-            description:
+            name:
               type: string
-            ownerClientId:
+            viewer:
+              type: boolean
+            estimation:
+              type: string
+            connected:
+              type: boolean
+            sessionId:
               type: string
               format: uuid
-            cardSelectionList:
-              type: string

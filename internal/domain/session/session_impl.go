@@ -26,18 +26,12 @@ func (*ServerInterfaceImpl) CreateSession(ctx echo.Context) error {
 	joinCode := base32.StdEncoding.EncodeToString(hash)[:8]
 	newEntry.JoinCode = &joinCode
 	newEntry.Description = requestBody.Description
+	newEntry.CardSelectionList = requestBody.CardSelectionList
+	newEntry.OwnerClientId = requestBody.OwnerClientId
 	if err := CreateSession(&newEntry); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create")
 	}
 	return ctx.JSON(http.StatusOK, newEntry)
-}
-
-func (*ServerInterfaceImpl) ListSession(ctx echo.Context, params ListSessionParams) error {
-	var responseList = []Session{}
-	if err := ListSession(&responseList); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to list")
-	}
-	return ctx.JSON(http.StatusOK, responseList)
 }
 
 func (*ServerInterfaceImpl) ReadSession(ctx echo.Context, id string) error {
@@ -55,37 +49,46 @@ func (*ServerInterfaceImpl) ReadSession(ctx echo.Context, id string) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (*ServerInterfaceImpl) UpdateSession(ctx echo.Context, id string) error {
+func (*ServerInterfaceImpl) ReadSessionJoinCode(ctx echo.Context, joinCode string) error {
+	var response Session
+	if err := ReadSessionJoinCode(joinCode, &response); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return echo.NewHTTPError(http.StatusNotFound)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to read")
+	}
+	return ctx.JSON(http.StatusOK, response)
+}
+
+func (*ServerInterfaceImpl) UpdateSession(ctx echo.Context, id string, params UpdateSessionParams) error {
 	uuid, err := uuid.Parse(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "bad id, expected format: uuid")
 	}
-	var request Session
-	if err := ctx.Bind(&request); err != nil {
+	var session Session
+	if err := ReadSession(uuid, &session); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return echo.NewHTTPError(http.StatusNotFound)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to read")
+	}
+	if session.OwnerClientId != nil && *session.OwnerClientId != params.ClientId {
+		return echo.NewHTTPError(http.StatusUnauthorized)
+	}
+
+	var requestBody UpdateSessionJSONRequestBody
+	if err := ctx.Bind(&requestBody); err != nil {
 		logrus.Infof("bind body failed: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "bad body, expected format: Session.json")
 	}
-	if err := UpdateSession(uuid, &request); err != nil {
+	session.Description = requestBody.Description
+	session.CardSelectionList = requestBody.CardSelectionList
+	session.OwnerClientId = requestBody.OwnerClientId
+	if err := UpdateSession(uuid, &session); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update")
-	}
-	return ctx.NoContent(http.StatusNoContent)
-}
-
-func (*ServerInterfaceImpl) DeleteSession(ctx echo.Context, id string) error {
-	uuid, err := uuid.Parse(id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "bad id, expected format: uuid")
-	}
-	var response Session
-	err = DeleteSession(uuid, &response)
-	if err == gorm.ErrRecordNotFound {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete")
 	}
 	return ctx.NoContent(http.StatusNoContent)
 }

@@ -3,6 +3,7 @@ package config
 import (
 	"strings"
 
+	"github.com/nats-io/nats.go"
 	"github.com/spf13/viper"
 )
 
@@ -17,6 +18,7 @@ func Init() error {
 	viper.SetDefault("server.host", viper.GetString("host"))
 	viper.SetDefault("server.port", viper.GetString("port"))
 	viper.SetDefault("database.url", "postgresql://postgres:postgres@localhost/scrumpoker_api")
+	viper.SetDefault("msgqueue.nats.url", nats.DefaultURL)
 
 	return nil
 }

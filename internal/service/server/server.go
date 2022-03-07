@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/chack93/scrumpoker_api/internal/domain"
+	"github.com/chack93/scrumpoker_api/internal/service/websocket"
+	"github.com/gobwas/ws"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
@@ -61,6 +63,16 @@ func (srv *Server) Init(wg *sync.WaitGroup) error {
 	})
 	apiGroup.GET("/doc/swagger.yaml", func(c echo.Context) error {
 		return c.HTMLBlob(http.StatusOK, swaggerYaml)
+	})
+	apiGroup.GET("/ws/:clientId", func(c echo.Context) error {
+		clientID := c.Param("clientId")
+		conn, _, _, err := ws.UpgradeHTTP(c.Request(), c.Response().Writer)
+		if err != nil {
+			logrus.Errorf("upgrade http failed: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to upgrade connection to websocket")
+		}
+		websocket.CreateHandler(conn, clientID)
+		return nil
 	})
 	domain.RegisterHandlers(srv.echo, baseURL)
 

@@ -1,0 +1,56 @@
+paths:
+  /history/{sessionId}:
+    get:
+      description: Read history of sessionId.
+      operationId: listHistory
+      parameters:
+        - name: sessionId
+          in: path
+          description: id of session
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: history response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryList'
+        '404':
+          description: not found 
+          content:
+            application/json:
+              schema:
+                $ref: '../common/common.yaml#/components/schemas/Error'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/common.yaml#/components/schemas/Error'
+components:
+  schemas:
+    HistoryList:
+      type: array
+      items:
+        $ref: '#/components/schemas/History'
+    History:
+      allOf:
+        - $ref: '../common/common.yaml#/components/schemas/BaseModel'
+        - $ref: '#/components/schemas/HistoryNew'
+    HistoryNew:
+      allOf:
+        - type: object
+          properties:
+            sessionId:
+              type: string
+              format: uuid
+            clientId:
+              type: string
+              format: uuid
+            clientName:
+              type: string
+            estimation:
+              type: string
