@@ -9,11 +9,10 @@ import (
 )
 
 func Init() error {
-	database.Get().AutoMigrate(
-		&session.Session{},
-		&client.Client{},
-		&history.History{},
-	)
+	db := database.Get()
+	db.AutoMigrate(&session.Session{})
+	db.AutoMigrate(&client.Client{})
+	db.AutoMigrate(&history.History{})
 
 	return nil
 }

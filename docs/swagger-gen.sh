@@ -14,14 +14,18 @@ for FILE in ${DOMAIN_FILES}; do
 	DOMAIN=`echo ${FILE} | sed -e 's/\.\.\/internal\/domain\///' -e 's/\/.*//'`
 	echo "\nparse: ${DOMAIN}.yaml -> ${DOMAIN}_gen.go"
 
-	${GOPATH}/bin/oapi-codegen \
-	-package=${DOMAIN} \
-	-import-mapping="../common/common.yaml:${MODULE}/internal/domain/common" \
-	-generate='types,server' \
-	../internal/domain/${DOMAIN}/${DOMAIN}.yaml \
-	> ../internal/domain/${DOMAIN}/${DOMAIN}_gen.go
+	if [ -f ../internal/domain/${DOMAIN}/${DOMAIN}-readonly.yaml ]; then
+		SWAGGER_FILES="${SWAGGER_FILES} ../internal/domain/${DOMAIN}/${DOMAIN}-readonly.yaml"
+	else
+		${GOPATH}/bin/oapi-codegen \
+		-package=${DOMAIN} \
+		-import-mapping="../common/common.yaml:${MODULE}/internal/domain/common" \
+		-generate='types,server' \
+		../internal/domain/${DOMAIN}/${DOMAIN}.yaml \
+		> ../internal/domain/${DOMAIN}/${DOMAIN}_gen.go
 
-	SWAGGER_FILES="${SWAGGER_FILES} ../internal/domain/${DOMAIN}/${DOMAIN}.yaml"
+		SWAGGER_FILES="${SWAGGER_FILES} ../internal/domain/${DOMAIN}/${DOMAIN}.yaml"
+	fi
 done
 
 # assemble swagger.gen.yaml

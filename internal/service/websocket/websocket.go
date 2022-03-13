@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/chack93/scrumpoker_api/internal/domain/common"
+	"github.com/chack93/scrumpoker_api/internal/domain/socketmsg"
 	"github.com/chack93/scrumpoker_api/internal/service/msgsystem"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
@@ -34,8 +34,8 @@ func CreateHandler(conn net.Conn, clientID string) {
 
 		// forware messages to client
 		msgSys.Subscribe(fmt.Sprintf("scrumpoker_api.client-response.%s", clientID), func(msg *nats.Msg) {
-			response := common.SocketMsg{
-				Head: common.SocketMsgHead{
+			response := socketmsg.SocketMsg{
+				Head: socketmsg.SocketMsgHead{
 					ClientID: msg.Header.Get("clientID"),
 					GroupID:  msg.Header.Get("groupID"),
 					Action:   msg.Header.Get("action"),
@@ -44,10 +44,22 @@ func CreateHandler(conn net.Conn, clientID string) {
 			}
 			if err := encoder.Encode(response); err != nil {
 				logrus.Errorf("[tx] failed to write response data, clientID: %s, err: %v", clientID, err)
+				msg.Sub.Unsubscribe()
+				natsMsg := nats.NewMsg("scrumpoker_api.client-request")
+				natsMsg.Header.Add("clientID", clientID)
+				natsMsg.Header.Add("groupID", "")
+				natsMsg.Header.Add("action", "close")
+				msgSys.PublishMsg(natsMsg)
 				return
 			}
 			if err := writer.Flush(); err != nil {
 				logrus.Errorf("[tx] failed to flush response data, clientID: %s, err: %v", clientID, err)
+				msg.Sub.Unsubscribe()
+				natsMsg := nats.NewMsg("scrumpoker_api.client-request")
+				natsMsg.Header.Add("clientID", clientID)
+				natsMsg.Header.Add("groupID", "")
+				natsMsg.Header.Add("action", "close")
+				msgSys.PublishMsg(natsMsg)
 				return
 			}
 		})
@@ -69,7 +81,7 @@ func CreateHandler(conn net.Conn, clientID string) {
 				return
 			}
 
-			var wsMsg common.SocketMsg
+			var wsMsg socketmsg.SocketMsg
 			if err := decoder.Decode(&wsMsg); err != nil {
 				logrus.Errorf("[rx] failed to decode socket msg, err: %v", err)
 				continue

@@ -27,7 +27,12 @@ type SessionNew struct {
 	// Embedded fields due to inline allOf schema
 	CardSelectionList *string `json:"cardSelectionList,omitempty"`
 	Description       *string `json:"description,omitempty"`
-	OwnerClientId     *string `json:"ownerClientId,omitempty"`
+
+	// states
+	// * init: new game started, cards hidden
+	// * reveal: game finished, cards are visible & current game is written to history
+	GameStatus    *string `json:"gameStatus,omitempty"`
+	OwnerClientId *string `json:"ownerClientId,omitempty"`
 }
 
 // CreateSessionJSONBody defines parameters for CreateSession.

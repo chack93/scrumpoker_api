@@ -40,6 +40,11 @@ components:
       allOf:
         - $ref: '../common/common.yaml#/components/schemas/BaseModel'
         - $ref: '#/components/schemas/HistoryNew'
+        - type: object
+          properties:
+            gameId:
+              type: string
+              format: uuid
     HistoryNew:
       allOf:
         - type: object

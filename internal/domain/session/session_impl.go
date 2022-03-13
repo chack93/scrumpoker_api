@@ -28,6 +28,7 @@ func (*ServerInterfaceImpl) CreateSession(ctx echo.Context) error {
 	newEntry.Description = requestBody.Description
 	newEntry.CardSelectionList = requestBody.CardSelectionList
 	newEntry.OwnerClientId = requestBody.OwnerClientId
+	newEntry.GameStatus = requestBody.GameStatus
 	if err := CreateSession(&newEntry); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create")
 	}
@@ -84,6 +85,7 @@ func (*ServerInterfaceImpl) UpdateSession(ctx echo.Context, id string, params Up
 	session.Description = requestBody.Description
 	session.CardSelectionList = requestBody.CardSelectionList
 	session.OwnerClientId = requestBody.OwnerClientId
+	session.GameStatus = requestBody.GameStatus
 	if err := UpdateSession(uuid, &session); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound)

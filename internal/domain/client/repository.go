@@ -21,6 +21,13 @@ func ListClient(modelList *[]Client) (err error) {
 	return
 }
 
+func ListClientOfSession(sessionID uuid.UUID, modelList *[]Client) (err error) {
+	if err = database.Get().Where("session_id = ?", sessionID).Find(modelList).Error; err != nil {
+		logrus.Errorf("failed, err: %v", err)
+	}
+	return
+}
+
 func ReadClient(id uuid.UUID, model *Client) (err error) {
 	if err = database.Get().First(&model, id).Error; err != nil {
 		logrus.Errorf("failed, id: %s, err: %v", id.String(), err)

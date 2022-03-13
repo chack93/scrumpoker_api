@@ -159,3 +159,9 @@ components:
               format: uuid
             cardSelectionList:
               type: string
+            gameStatus:
+              type: string
+              description: |
+                states
+                * init: new game started, cards hidden
+                * reveal: game finished, cards are visible & current game is written to history

@@ -18,6 +18,8 @@ type History struct {
 	externalRef0.BaseModel `yaml:",inline"`
 	// Embedded struct due to allOf(#/components/schemas/HistoryNew)
 	HistoryNew `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+	GameId *string `json:"gameId,omitempty"`
 }
 
 // HistoryList defines model for HistoryList.

@@ -1,0 +1,39 @@
+components:
+  schemas:
+    SocketMsg:
+      type: object
+      properties:
+        head:
+          type: object
+          required:
+          - action
+          - clientId
+          properties:
+            action:
+              type: string
+              description: action to perform
+            clientId:
+              type: string
+              format: uuid
+              description: client this message originated from or shall be sent to
+            groupId:
+              type: string
+              format: uuid
+              description: group this message is intended for
+        body:
+          type: object
+    SocketMsgBodyUpdate:
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/Session'
+        client:
+          $ref: '#/components/schemas/Client'
+        clientList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Client'
+        historyList:
+          type: array
+          items:
+            $ref: '#/components/schemas/History'

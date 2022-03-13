@@ -23,6 +23,7 @@ func TestHistoryCRUD(t *testing.T) {
 	var clientName = "John Doe"
 	var estimation = "3"
 	var sessionID = uuid.New().String()
+	var gameID = uuid.New().String()
 
 	var createRequest = history.History{
 		HistoryNew: history.HistoryNew{
@@ -31,6 +32,7 @@ func TestHistoryCRUD(t *testing.T) {
 			Estimation: &estimation,
 			SessionId:  &sessionID,
 		},
+		GameId: &gameID,
 	}
 
 	assert.NoError(t, history.CreateHistory(&createRequest))

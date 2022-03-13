@@ -9,13 +9,13 @@ paths:
   /ws/{clientId}:
     get:
       description: |
-        websocket endpoint. \
-        The socket-messages head describes \
-        * what action shall be performed (action) \
-        * the origin/destination of the message (clientId) \
-        * the group this message is intended for (groupId) \
-        actions \
-        * update
+        websocket endpoint.
+        The socket-messages head describes
+        * what action shall be performed (action)
+        * the origin/destination of the message (clientId)
+        * the group this message is intended for (groupId)
+        * actions
+          * (update) transmit latest client/session state from client to server or vice versa
       operationId: sessionWebsocket
       parameters:
         - name: clientId
