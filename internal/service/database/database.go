@@ -71,7 +71,7 @@ func ensureAppTableExists(dbUrl url.URL) error {
 	dbUrl.Path = "postgres"
 	db, err := gorm.Open(postgres.Open(dbUrl.String()), &gorm.Config{})
 	if err != nil {
-		logrus.Errorf("open db connection failed, err: %v", err)
+		logrus.Errorf("open db connection failed, url: %s err: %v", dbUrl.String(), err)
 		return err
 	}
 

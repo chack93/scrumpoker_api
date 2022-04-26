@@ -64,14 +64,15 @@ func (srv *Server) Init(wg *sync.WaitGroup) error {
 	apiGroup.GET("/doc/swagger.yaml", func(c echo.Context) error {
 		return c.HTMLBlob(http.StatusOK, swaggerYaml)
 	})
-	apiGroup.GET("/ws/:clientId", func(c echo.Context) error {
+	apiGroup.GET("/ws/:clientId/:groupId", func(c echo.Context) error {
 		clientID := c.Param("clientId")
+		groupID := c.Param("groupId")
 		conn, _, _, err := ws.UpgradeHTTP(c.Request(), c.Response().Writer)
 		if err != nil {
 			logrus.Errorf("upgrade http failed: %v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to upgrade connection to websocket")
 		}
-		websocket.CreateHandler(conn, clientID)
+		websocket.CreateHandler(conn, clientID, groupID)
 		return nil
 	})
 	domain.RegisterHandlers(srv.echo, baseURL)

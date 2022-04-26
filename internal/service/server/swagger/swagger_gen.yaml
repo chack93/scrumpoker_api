@@ -411,7 +411,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: unexpected error
-  /ws/{clientId}:
+  /ws/{clientId}/{groupId}:
     get:
       description: |
         websocket endpoint.
@@ -426,6 +426,13 @@ paths:
       - description: client id
         in: path
         name: clientId
+        required: true
+        schema:
+          format: uuid
+          type: string
+      - description: group id
+        in: path
+        name: groupId
         required: true
         schema:
           format: uuid

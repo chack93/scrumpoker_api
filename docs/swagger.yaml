@@ -6,7 +6,7 @@ info:
 servers:
   - url: /api/scrumpoker
 paths:
-  /ws/{clientId}:
+  /ws/{clientId}/{groupId}:
     get:
       description: |
         websocket endpoint.
@@ -21,6 +21,13 @@ paths:
         - name: clientId
           in: path
           description: client id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: groupId
+          in: path
+          description: group id
           required: true
           schema:
             type: string

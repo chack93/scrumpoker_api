@@ -40,7 +40,9 @@ func Init() error {
 				return
 			}
 			t := true
+			gid := groupID.String()
 			cl.Connected = &t
+			cl.SessionId = &gid
 			if err := client.UpdateClient(clientID, &cl); err != nil {
 				logrus.Errorf("update client failed, action: %s, cID: %s, err: %v", action, clientID.String(), err)
 				return
@@ -66,12 +68,14 @@ func Init() error {
 			return
 		}
 
-		natsMsg := nats.NewMsg(fmt.Sprintf("scrumpoker_api.client-response.%s", clientID.String()))
-		natsMsg.Header.Add("clientID", clientID.String())
-		natsMsg.Header.Add("groupID", groupID.String())
-		natsMsg.Header.Add("action", action)
-		natsMsg.Data = msg.Data
-		msgSys.PublishMsg(natsMsg)
+		/*
+			natsMsg := nats.NewMsg(fmt.Sprintf("scrumpoker_api.client-response.%s", clientID.String()))
+			natsMsg.Header.Add("clientID", clientID.String())
+			natsMsg.Header.Add("groupID", groupID.String())
+			natsMsg.Header.Add("action", action)
+			natsMsg.Data = msg.Data
+			msgSys.PublishMsg(natsMsg)
+		*/
 	})
 	return nil
 }
@@ -92,37 +96,42 @@ func UpdateClientsOfGroup(groupID uuid.UUID) (err error) {
 		logrus.Errorf("read client list failed, gID: %s, err: %v", groupID.String(), err)
 		return
 	}
-	bodyJson, err := json.Marshal(socketmsg.SocketMsgBodyUpdate{
+	msgBody := socketmsg.SocketMsgBodyUpdate{
 		Session:     &se,
 		ClientList:  &clList,
 		HistoryList: &hiList,
-	})
-	if err != nil {
-		logrus.Errorf("marshal update body failed, gID: %s, err: %v", groupID.String(), err)
-		return
 	}
 
 	for _, el := range clList {
-		socketMsg := socketmsg.SocketMsg{
-			Head: socketmsg.SocketMsgHead{
-				Action:   "update",
-				ClientID: el.ID.String(),
-				GroupID:  groupID.String(),
-			},
-			Body: bodyJson,
-		}
-		socketMsgJson, err := json.Marshal(socketMsg)
-		if err != nil {
-			logrus.Errorf("marshal update failed, cID: %s, err: %v", el.ID.String(), err)
-			continue
-		}
+		/*
+			socketMsg := socketmsg.SocketMsg{
+				Head: socketmsg.SocketMsgHead{
+					Action:   "update",
+					ClientID: el.ID.String(),
+					GroupID:  groupID.String(),
+				},
+				Body: bodyJson,
+			}
+			socketMsgJson, err := json.Marshal(socketMsg)
+			if err != nil {
+				logrus.Errorf("marshal update failed, cID: %s, err: %v", el.ID.String(), err)
+				continue
+			}
+		*/
 
 		msgSys := msgsystem.Get()
 		natsMsg := nats.NewMsg(fmt.Sprintf("scrumpoker_api.client-response.%s", el.ID.String()))
 		natsMsg.Header.Add("clientID", el.ID.String())
 		natsMsg.Header.Add("groupID", groupID.String())
 		natsMsg.Header.Add("action", "update")
-		natsMsg.Data = socketMsgJson
+
+		msgBody.Client = &el
+		bodyJson, err := json.Marshal(msgBody)
+		if err != nil {
+			logrus.Errorf("marshal update body failed, gID: %s, err: %v", groupID.String(), err)
+			continue
+		}
+		natsMsg.Data = bodyJson
 		msgSys.PublishMsg(natsMsg)
 	}
 	return nil
@@ -156,24 +165,51 @@ func handleUpdateRequest(msg *nats.Msg) {
 		return
 	}
 
-	cl.Connected = updateRequest.Client.Connected
-	cl.Estimation = updateRequest.Client.Estimation
-	cl.Name = updateRequest.Client.Name
-	cl.SessionId = updateRequest.Client.SessionId
-	cl.Viewer = updateRequest.Client.Viewer
+	if updateRequest.Client != nil {
+		connectedTrue := true
+		cl.Connected = &connectedTrue
+		cl.Estimation = updateRequest.Client.Estimation
+		cl.Name = updateRequest.Client.Name
+		cl.SessionId = updateRequest.Client.SessionId
+		if cl.SessionId == nil || len(*cl.SessionId) < 1 {
+			grpId := groupID.String()
+			cl.SessionId = &grpId
+		}
+		cl.Viewer = updateRequest.Client.Viewer
+	}
 
-	if *se.OwnerClientId == cl.ID.String() {
-		oldGameStatus := *se.GameStatus
+	if se.OwnerClientId != nil && *se.OwnerClientId == cl.ID.String() && updateRequest.Session != nil {
+		oldGameStatus := ""
+		if se.GameStatus != nil {
+			oldGameStatus = *se.GameStatus
+		}
 		se.CardSelectionList = updateRequest.Session.CardSelectionList
 		se.Description = updateRequest.Session.Description
-		se.OwnerClientId = updateRequest.Session.OwnerClientId
+		//se.OwnerClientId = updateRequest.Session.OwnerClientId
 		se.GameStatus = updateRequest.Session.GameStatus
 		if err := session.UpdateSession(clientID, &se); err != nil {
 			logrus.Errorf("update client failed, action: %s, cID: %s, gID: %s, err: %v", action, clientID.String(), groupID.String(), err)
 			return
 		}
 
-		if oldGameStatus != "reveal" && *updateRequest.Session.GameStatus == "reveal" {
+		if oldGameStatus != "new" && updateRequest.Session.GameStatus != nil && *updateRequest.Session.GameStatus == "new" {
+			var clientList []client.Client
+			if err := client.ListClientOfSession(groupID, &clientList); err != nil {
+				logrus.Errorf("update failed, action: %s, cID: %s, gID: %s, err: %v", action, clientID.String(), groupID.String(), err)
+			}
+
+			for _, el := range clientList {
+				emptyEstimation := ""
+				el.Estimation = &emptyEstimation
+				cl.Estimation = &emptyEstimation
+
+				if err := client.UpdateClient(el.ID, &el); err != nil {
+					logrus.Errorf("new game / reset client estimation failed, action: %s, cID: %s, gID: %s, err: %v", action, clientID.String(), groupID.String(), err)
+				}
+			}
+		}
+
+		if oldGameStatus != "reveal" && updateRequest.Session.GameStatus != nil && *updateRequest.Session.GameStatus == "reveal" {
 			gameUUID := uuid.New().String()
 
 			var clientList []client.Client

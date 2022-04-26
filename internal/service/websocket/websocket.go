@@ -3,6 +3,7 @@ package websocket
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 
@@ -15,7 +16,7 @@ import (
 )
 
 // CreateHandler forward messages from client
-func CreateHandler(conn net.Conn, clientID string) {
+func CreateHandler(conn net.Conn, clientID string, groupID string) {
 	go func() {
 		defer conn.Close()
 		reader := wsutil.NewReader(conn, ws.StateServerSide)
@@ -28,39 +29,47 @@ func CreateHandler(conn net.Conn, clientID string) {
 		logrus.Infof("[open] connection opened, clientID: %s", clientID)
 		natsMsg := nats.NewMsg("scrumpoker_api.client-request")
 		natsMsg.Header.Add("clientID", clientID)
-		natsMsg.Header.Add("groupID", "")
+		natsMsg.Header.Add("groupID", groupID)
 		natsMsg.Header.Add("action", "open")
 		msgSys.PublishMsg(natsMsg)
 
 		// forware messages to client
 		msgSys.Subscribe(fmt.Sprintf("scrumpoker_api.client-response.%s", clientID), func(msg *nats.Msg) {
+			responseMsg := msg.Data
+			if len(responseMsg) < 1 {
+				responseMsg = []byte("{}")
+			}
 			response := socketmsg.SocketMsg{
 				Head: socketmsg.SocketMsgHead{
 					ClientID: msg.Header.Get("clientID"),
 					GroupID:  msg.Header.Get("groupID"),
 					Action:   msg.Header.Get("action"),
 				},
-				Body: msg.Data,
+				Body: responseMsg,
 			}
 			if err := encoder.Encode(response); err != nil {
 				logrus.Errorf("[tx] failed to write response data, clientID: %s, err: %v", clientID, err)
-				msg.Sub.Unsubscribe()
-				natsMsg := nats.NewMsg("scrumpoker_api.client-request")
-				natsMsg.Header.Add("clientID", clientID)
-				natsMsg.Header.Add("groupID", "")
-				natsMsg.Header.Add("action", "close")
-				msgSys.PublishMsg(natsMsg)
-				return
+				if errors.Is(err, net.ErrClosed) {
+					msg.Sub.Unsubscribe()
+					natsMsg := nats.NewMsg("scrumpoker_api.client-request")
+					natsMsg.Header.Add("clientID", clientID)
+					natsMsg.Header.Add("groupID", groupID)
+					natsMsg.Header.Add("action", "close")
+					msgSys.PublishMsg(natsMsg)
+					return
+				}
 			}
 			if err := writer.Flush(); err != nil {
 				logrus.Errorf("[tx] failed to flush response data, clientID: %s, err: %v", clientID, err)
-				msg.Sub.Unsubscribe()
-				natsMsg := nats.NewMsg("scrumpoker_api.client-request")
-				natsMsg.Header.Add("clientID", clientID)
-				natsMsg.Header.Add("groupID", "")
-				natsMsg.Header.Add("action", "close")
-				msgSys.PublishMsg(natsMsg)
-				return
+				if errors.Is(err, net.ErrClosed) {
+					msg.Sub.Unsubscribe()
+					natsMsg := nats.NewMsg("scrumpoker_api.client-request")
+					natsMsg.Header.Add("clientID", clientID)
+					natsMsg.Header.Add("groupID", groupID)
+					natsMsg.Header.Add("action", "close")
+					msgSys.PublishMsg(natsMsg)
+					return
+				}
 			}
 		})
 
@@ -75,7 +84,7 @@ func CreateHandler(conn net.Conn, clientID string) {
 				logrus.Errorf("[rx] connection closed, clientID: %s", clientID)
 				natsMsg := nats.NewMsg("scrumpoker_api.client-request")
 				natsMsg.Header.Add("clientID", clientID)
-				natsMsg.Header.Add("groupID", "")
+				natsMsg.Header.Add("groupID", groupID)
 				natsMsg.Header.Add("action", "close")
 				msgSys.PublishMsg(natsMsg)
 				return
