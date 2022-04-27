@@ -96,6 +96,7 @@ docker-run: destroy_container docker-build create_docker_network
 		--env LOG_LEVEL=warn \
 		--env LOG_FORMAT=json \
 		--env DATABASE_URL=${DATABASE_URL} \
+		--env MSGQUEUE_NATS_URL=${NATS_URL} \
 		--name ${APP_NAME} \
 		--net ${DOCKER_NETWORK} \
 		--restart always \
