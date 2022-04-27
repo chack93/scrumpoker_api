@@ -2,6 +2,7 @@ package domain
 
 import (
 	"github.com/chack93/scrumpoker_api/internal/domain/client"
+	"github.com/chack93/scrumpoker_api/internal/domain/globalconfig"
 	"github.com/chack93/scrumpoker_api/internal/domain/history"
 	"github.com/chack93/scrumpoker_api/internal/domain/session"
 	"github.com/chack93/scrumpoker_api/internal/service/database"
@@ -13,6 +14,7 @@ func Init() error {
 	db.AutoMigrate(&session.Session{})
 	db.AutoMigrate(&client.Client{})
 	db.AutoMigrate(&history.History{})
+	db.AutoMigrate(&globalconfig.GlobalConfig{})
 
 	return nil
 }

@@ -67,15 +67,6 @@ func Init() error {
 			logrus.Errorf("unknown action in request, action: %s, cID: %s", action, clientID.String())
 			return
 		}
-
-		/*
-			natsMsg := nats.NewMsg(fmt.Sprintf("scrumpoker_api.client-response.%s", clientID.String()))
-			natsMsg.Header.Add("clientID", clientID.String())
-			natsMsg.Header.Add("groupID", groupID.String())
-			natsMsg.Header.Add("action", action)
-			natsMsg.Data = msg.Data
-			msgSys.PublishMsg(natsMsg)
-		*/
 	})
 	return nil
 }
@@ -103,22 +94,6 @@ func UpdateClientsOfGroup(groupID uuid.UUID) (err error) {
 	}
 
 	for _, el := range clList {
-		/*
-			socketMsg := socketmsg.SocketMsg{
-				Head: socketmsg.SocketMsgHead{
-					Action:   "update",
-					ClientID: el.ID.String(),
-					GroupID:  groupID.String(),
-				},
-				Body: bodyJson,
-			}
-			socketMsgJson, err := json.Marshal(socketMsg)
-			if err != nil {
-				logrus.Errorf("marshal update failed, cID: %s, err: %v", el.ID.String(), err)
-				continue
-			}
-		*/
-
 		msgSys := msgsystem.Get()
 		natsMsg := nats.NewMsg(fmt.Sprintf("scrumpoker_api.client-response.%s", el.ID.String()))
 		natsMsg.Header.Add("clientID", el.ID.String())

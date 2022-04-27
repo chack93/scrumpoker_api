@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/chack93/scrumpoker_api/internal/domain"
+	"github.com/chack93/scrumpoker_api/internal/service/cleanup"
 	"github.com/chack93/scrumpoker_api/internal/service/config"
 	"github.com/chack93/scrumpoker_api/internal/service/database"
 	"github.com/chack93/scrumpoker_api/internal/service/datasync"
@@ -31,6 +32,9 @@ func main() {
 	}
 	if err := datasync.Init(); err != nil {
 		logrus.Fatalf("datasync init failed, err: %v", err)
+	}
+	if err := cleanup.Init(); err != nil {
+		logrus.Fatalf("cleanup init failed, err: %v", err)
 	}
 
 	wg := new(sync.WaitGroup)

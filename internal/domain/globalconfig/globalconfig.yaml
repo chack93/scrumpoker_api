@@ -1,0 +1,15 @@
+components:
+  schemas:
+    GlobalConfigList:
+      type: array
+      items:
+        $ref: '#/components/schemas/GlobalConfig'
+    GlobalConfig:
+      allOf:
+        - $ref: '../common/common.yaml#/components/schemas/BaseModel'
+        - type: object
+          properties:
+            key:
+              type: string
+            value:
+              type: string

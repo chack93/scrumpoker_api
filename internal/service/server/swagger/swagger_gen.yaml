@@ -43,6 +43,19 @@ components:
       required:
       - message
       type: object
+    GlobalConfig:
+      allOf:
+      - $ref: '#/components/schemas/BaseModel'
+      - properties:
+          key:
+            type: string
+          value:
+            type: string
+        type: object
+    GlobalConfigList:
+      items:
+        $ref: '#/components/schemas/GlobalConfig'
+      type: array
     History:
       allOf:
       - $ref: '#/components/schemas/BaseModel'
