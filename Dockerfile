@@ -2,7 +2,6 @@ FROM golang:1 AS builder
 WORKDIR /app
 COPY . .
 RUN make deps
-RUN make docs
 RUN make build
 
 FROM alpine:3 AS runner

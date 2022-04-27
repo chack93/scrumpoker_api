@@ -6,8 +6,8 @@ MODULE=`cat ../go.mod | grep module | sed 's/^module //'`
 SWAGGER_FILES="swagger.yaml ../internal/domain/common/common.yaml"
 
 # ensure required binaries are installed
-command -v oapi-codegen && echo "oapi-codegen installed, nothing to do" || go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen
-command -v yq  && echo "yq installed, nothing to do" || go get github.com/mikefarah/yq/v2
+command -v oapi-codegen && echo "oapi-codegen installed, nothing to do" || ( echo "install oapi-codegen"; go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.9.1)
+command -v yq  && echo "yq installed, nothing to do" || (echo "install yq"; go install github.com/mikefarah/yq/v2@latest)
 
 # generate model & handler for each domain
 for FILE in ${DOMAIN_FILES}; do
