@@ -1,5 +1,5 @@
 APP_NAME = scrumpoker_api
-VERSION = 1.0.0
+VERSION = 1.0.1
 HOST ?= 127.0.0.1
 PORT ?= 8080
 DOCKER_NETWORK ?= net_app
