@@ -8,9 +8,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func createEmptyModel(key string) *GlobalConfig {
+func createEmptyModel(key string) GlobalConfig {
 	value := ""
-	return &GlobalConfig{Key: &key, Value: &value}
+	return GlobalConfig{Key: &key, Value: &value}
 }
 
 func CreateGlobalConfig(model *GlobalConfig) (err error) {
@@ -22,11 +22,12 @@ func CreateGlobalConfig(model *GlobalConfig) (err error) {
 }
 
 func ReadGlobalConfig(key string, model *GlobalConfig) (err error) {
-	if err = database.Get().First(&model, key).Error; err != nil {
+	if err = database.Get().Where("key = ?", key).First(&model).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		logrus.Errorf("failed, key: %s, err: %v", key, err)
+		return
 	}
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		model = createEmptyModel(key)
+		*model = createEmptyModel(key)
 		err = CreateGlobalConfig(model)
 	}
 	return

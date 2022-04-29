@@ -49,17 +49,17 @@ func Init() error {
 					}
 				}
 			}
+		}
 
-			var clientList []client.Client
-			if err = client.ListClientOfSession(el, &clientList); err != nil {
-				logrus.Warnf("cleanup, list client of session failed, session-id: %s, err: %v", el.String(), err)
-			}
-			if clientList != nil {
-				for _, cel := range clientList {
-					if cel.UpdatedAt.Before(expireTime) {
-						if err = client.DeleteClient(cel.ID, &cel); err != nil {
-							logrus.Warnf("cleanup, delete client failed, client-id: %s, err: %v", cel.ID.String(), err)
-						}
+		var clientList []client.Client
+		if err = client.ListClient(&clientList); err != nil {
+			logrus.Warnf("cleanup, list clients failed, err: %v", err)
+		}
+		if clientList != nil {
+			for _, el := range clientList {
+				if el.UpdatedAt.Before(expireTime) {
+					if err = client.DeleteClient(el.ID, &el); err != nil {
+						logrus.Warnf("cleanup, delete client failed, client-id: %s, err: %v", el.ID.String(), err)
 					}
 				}
 			}
@@ -69,14 +69,15 @@ func Init() error {
 	})
 
 	scheduler := gocron.NewScheduler(time.UTC)
-	if _, err := scheduler.Every(1).Day().At("01:00").Do(func() {
+	//if _, err := scheduler.Every(1).Day().At("01:00").Do(func() {
+	if _, err := scheduler.Every(1).Second().Do(func() {
 		// Handling multiple service instances:
 		// - wait randomly of up to 30 seconds
 		// - first one to run writes config & blocks others
 		time.Sleep(time.Duration(rand.Int63n(30)) * time.Second)
 
 		var lastCleanupConfig globalconfig.GlobalConfig
-		if err := globalconfig.ReadGlobalConfig("", &lastCleanupConfig); err != nil {
+		if err := globalconfig.ReadGlobalConfig("last_cleanup_timestamp", &lastCleanupConfig); err != nil {
 			logrus.Errorf("daily cleanup, read last cleanup time failed, err: %v", err)
 			return
 		}

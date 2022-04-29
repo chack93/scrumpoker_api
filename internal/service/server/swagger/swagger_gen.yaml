@@ -150,7 +150,7 @@ components:
 info:
   description: scrumpoker_api REST api
   title: scrumpoker_api REST api
-  version: 1.0.0
+  version: 1.0.1
 openapi: 3.0.0
 paths:
   /client:
