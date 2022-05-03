@@ -2,3 +2,4 @@
 .env
 bin/
 docs/swagger-ui-4.5.0
+.envrc
